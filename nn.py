@@ -3,28 +3,24 @@ import itertools
 import input
 import data 
 
+np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
+
 class Node:
 	def __init__(self,nInputs,feeder,isInput):
-		self.feeder = feeder
 		if isInput:
-			self.w = np.zeros((nInputs))
+			pass
 		else:
+			self.feeder = feeder
 			self.initWeights()
-		self.activation = 0
 
 	def initWeights(self):
 		self.w = self.feeder.getNextNodesWeights()
-		print(self.feeder.listPosition)
-		# self.w = np.random.rand(np.size(self.w))*0.1
 
 	def sigmoid(self):
 		self.activation = 1/(1+np.exp(-self.activation))
 
 	def forward(self,features):
 		assert(np.size(features) < np.size(self.w))
-		# bias at end
-		# self.features = np.concatenate([features,-np.ones((1))])
-		# bias at beginning
 		self.features = np.concatenate([-np.ones((1)), features])	
 		self.activation = np.inner(self.w,self.features)
 		self.sigmoid()
@@ -34,9 +30,16 @@ class Node:
 		self.grad = self.features*self.delta
 		self.w = self.w + 0.1*self.grad
 
-	def resetActivations(self):
+	def reset(self):
+		# Only strictly necessary to del activation
 		if hasattr(self,'activation'):
 			del self.activation
+			del self.features
+			del self.delta
+			del self.dsig
+			del self.grad
+		if hasattr(self,'label'):
+			del self.label
 
 class Layer:
 	def __init__(self,layerSize,nInputs,feeder,isInput):
@@ -52,11 +55,18 @@ class Layer:
 			else:
 				self.activations = np.array(node.activation)
 
-	def resetActivations(self):
+	def backward(self):
+		s = np.zeros(np.size(self.nodes[0].w))
+		for i in range(1,np.size(self.nodes[0].w)):
+			for node in self.nodes:
+				s[i-1] = s[i-1] + node.w[i]*node.delta
+		return s
+
+	def reset(self):
 		if hasattr(self,'activations'):
 			del self.activations
 		for node in self.nodes:
-			node.resetActivations()
+			node.reset()
 
 class Network:
 	def __init__(self,f):
@@ -73,7 +83,7 @@ class Network:
 
 	def forward(self, features):
 		if hasattr(self,'activations'):
-			self.resetActivations()
+			self.reset()
 
 		for layer in self.layers:
 			if hasattr(self,'activations'):
@@ -92,37 +102,31 @@ class Network:
 
 		for l in reversed(range(1,len(self.layers)-1)):
 			layer = self.layers[l]
+			s = self.layers[l+1].backward()
 			for i in range(0,len(layer.nodes)):
-				s = 0
-				for j in range(0,len(self.layers[l+1].nodes)):
-					s = s + self.layers[l+1].nodes[j].w[i]*self.layers[l+1].nodes[j].delta
+				layer.nodes[i].delta = layer.nodes[i].dsig*s[i]
 
-				layer.nodes[i].delta = layer.nodes[i].dsig*s
-
-		# update nodes
 		for layer in self.layers:
 			for node in layer.nodes:
 				if hasattr(node,'delta'):
 					node.update()
-		# quit()
 
-	def resetActivations(self):
+	def reset(self):
 		del self.activations
 		for layer in self.layers:
-			layer.resetActivations()
+			layer.reset()
 
 inputFeeder = input.Input('sample.NNWDBC.init')
-dataFeeder = data.DataFeeder('wdbc.mini_train')
+dataFeeder = data.DataFeeder('wdbc.train')
 model = Network(inputFeeder)
 
-for epoch in range(0,1):
+for epoch in range(0,100):
 	nCorrect = 0
 	for example in range(1,dataFeeder.listMax+1):
 		features, target = dataFeeder.getNextExample()
 		model.forward(features)
-		# print(model.activations)
-		model.backward([target])
-		if (np.round(model.activations) == target):
+		model.backward(target)
+		if (all(np.round(model.activations) == target)):
 			nCorrect += 1
 
 	print('Pct Correct', nCorrect / dataFeeder.listMax)
@@ -130,5 +134,6 @@ for epoch in range(0,1):
 
 for layer in model.layers:
 	for node in layer.nodes:
-		print(node.w)
+		if hasattr(node,'delta'):
+			print(node.w)
 
