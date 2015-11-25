@@ -1,2 +1,2 @@
 # snn
-Simple neural network from scratch in C++
+Simple neural network from scratch in Python
