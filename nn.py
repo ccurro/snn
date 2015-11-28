@@ -151,6 +151,7 @@ if training:
 	f = open(outFile,'w')
 	for e in inputFeeder.l[0]:
 		f.write('{0:d} '.format(int(e)))
+	f.seek(f.tell()-1,0) # to overwrite trailing space
 	f.write('\n')
 
 	for layer in model.layers:
@@ -159,9 +160,22 @@ if training:
 				print(node.w)
 				for e in node.w:
 					f.write('{0:.3f} '.format(e))
+				f.seek(f.tell()-1,0) # to overwrite trailing space
 				f.write('\n')
 else: # testing
-	pass
+	trainedFile, testFile, outFile = userInput.getTest()
+	inputFeeder = nnLoad.Input(trainedFile)
+	dataFeeder = data.DataFeeder(testFile)
+	model = Network(inputFeeder)
+	nCorrect = 0
+	for example in range(1,dataFeeder.listMax+1):
+		features, target = dataFeeder.getNextExample()
+		model.forward(features)
+		if (all(np.round(model.activations) == target)):
+				nCorrect += 1
+
+	print('Pct Correct', nCorrect / dataFeeder.listMax)
+
 
 
 

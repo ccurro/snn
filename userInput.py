@@ -38,5 +38,12 @@ def getTrain():
 	nEpochs = getNEpochs()
 	return initFile, trainFile, outFile, learningRate, nEpochs
 
+def getTest():
+	trainedFile = getFile('Please eneter filename for the trained network: ')
+	testFile = getFile('Please enter filename for the test set: ')
+	outFile = input('Please enter filename to save the test metrics: ')
+	return trainedFile, testFile, outFile
+
 if __name__ == '__main__':
-	get()
+	getTrain()
+	getTest()
