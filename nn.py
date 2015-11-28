@@ -1,11 +1,16 @@
 import numpy as np
 import itertools
-import input
-import data 
+import input as nnLoad
+import data
+import userInput
 
 np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
 class Node:
+	# Make learning rate Class variable so it can updated 
+	# for all nodes dynamically
+	learningRate = 0.1 # will be set by user input
+
 	def __init__(self,nInputs,feeder,isInput):
 		if isInput:
 			pass
@@ -28,18 +33,11 @@ class Node:
 
 	def update(self):
 		self.grad = self.features*self.delta
-		self.w = self.w + 0.1*self.grad
+		self.w = self.w + Node.learningRate*self.grad
 
-	def reset(self):
-		# Only strictly necessary to del activation
+	def resetActivations(self):
 		if hasattr(self,'activation'):
 			del self.activation
-			del self.features
-			del self.delta
-			del self.dsig
-			del self.grad
-		if hasattr(self,'label'):
-			del self.label
 
 class Layer:
 	def __init__(self,layerSize,nInputs,feeder,isInput):
@@ -62,11 +60,11 @@ class Layer:
 				s[i-1] = s[i-1] + node.w[i]*node.delta
 		return s
 
-	def reset(self):
+	def resetActivations(self):
 		if hasattr(self,'activations'):
 			del self.activations
 		for node in self.nodes:
-			node.reset()
+			node.resetActivations()
 
 class Network:
 	def __init__(self,f):
@@ -83,7 +81,7 @@ class Network:
 
 	def forward(self, features):
 		if hasattr(self,'activations'):
-			self.reset()
+			self.resetActivations()
 
 		for layer in self.layers:
 			if hasattr(self,'activations'):
@@ -111,29 +109,59 @@ class Network:
 				if hasattr(node,'delta'):
 					node.update()
 
-	def reset(self):
+	def resetActivations(self):
 		del self.activations
 		for layer in self.layers:
-			layer.reset()
+			layer.resetActivations()
 
-inputFeeder = input.Input('sample.NNWDBC.init')
-dataFeeder = data.DataFeeder('wdbc.train')
-model = Network(inputFeeder)
-
-for epoch in range(0,100):
-	nCorrect = 0
-	for example in range(1,dataFeeder.listMax+1):
-		features, target = dataFeeder.getNextExample()
-		model.forward(features)
-		model.backward(target)
-		if (all(np.round(model.activations) == target)):
-			nCorrect += 1
-
-	print('Pct Correct', nCorrect / dataFeeder.listMax)
+while True:
+	try:
+		response = input("Training a newtork? y/n ")
+		if not (response == 'y' or response == 'n'):
+			raise ValueError
+		if response == 'y':
+			training = True
+		else:
+			training = False
+		break
+	except ValueError as e:
+		print("Did not enter 'y' or 'n', try again")
 
 
-for layer in model.layers:
-	for node in layer.nodes:
-		if hasattr(node,'delta'):
-			print(node.w)
+if training:
+	initFile, trainFile, outFile, learningRate, nEpochs = userInput.getTrain()
+
+	Node.learningRate = learningRate
+	inputFeeder = nnLoad.Input(initFile)
+	dataFeeder = data.DataFeeder(trainFile)
+	model = Network(inputFeeder)
+
+	for epoch in range(0,nEpochs):
+		nCorrect = 0
+		for example in range(1,dataFeeder.listMax+1):
+			features, target = dataFeeder.getNextExample()
+			model.forward(features)
+			model.backward(target)
+			if (all(np.round(model.activations) == target)):
+				nCorrect += 1
+
+		print('Pct Correct', nCorrect / dataFeeder.listMax)
+
+
+	f = open(outFile,'w')
+	for e in inputFeeder.l[0]:
+		f.write('{0:d} '.format(int(e)))
+	f.write('\n')
+
+	for layer in model.layers:
+		for node in layer.nodes:
+			if hasattr(node,'w'):
+				print(node.w)
+				for e in node.w:
+					f.write('{0:.3f} '.format(e))
+				f.write('\n')
+else: # testing
+	pass
+
+
 
