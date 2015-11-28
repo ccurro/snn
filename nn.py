@@ -3,6 +3,7 @@ import itertools
 import input as nnLoad
 import data
 import userInput
+from scores import score
 
 np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
@@ -167,15 +168,27 @@ else: # testing
 	inputFeeder = nnLoad.Input(trainedFile)
 	dataFeeder = data.DataFeeder(testFile)
 	model = Network(inputFeeder)
-	nCorrect = 0
+
+	targets = []
+	predictions = []
+
 	for example in range(1,dataFeeder.listMax+1):
 		features, target = dataFeeder.getNextExample()
 		model.forward(features)
-		if (all(np.round(model.activations) == target)):
-				nCorrect += 1
+		predictions.append(model.activations)
+		targets.append(target)
 
-	print('Pct Correct', nCorrect / dataFeeder.listMax)
+	targets = np.array(targets,np.int,ndmin=2)
+	softPredictions = np.array(predictions,np.float64,ndmin=2)
+	predictions = np.array(np.round(predictions),np.int,ndmin=2)
 
+	# Make sure shapes of targets and preds are nClasses by nExamples
+	if np.any(np.shape(targets) != np.shape(predictions)):
+		targets = np.swapaxes(targets,0,1)
 
+	if np.shape(targets)[0] == dataFeeder.listMax:
+		targets = np.transpose(targets)
+		predictions = np.transpose(predictions)
+		softPredictions = np.transpose(softPredictions)
 
-
+	score(targets,predictions,softPredictions)
