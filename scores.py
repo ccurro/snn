@@ -7,6 +7,7 @@ def score(targets, predictions,fName):
 	t = np.sum(targets,0)
 	p = np.sum(predictions,0)
 	c = confusion_matrix(t,p)
+	print(t)
 	print(c)
 
 	# Supress deprecation warnings
@@ -16,7 +17,7 @@ def score(targets, predictions,fName):
 			for clss in range(1,np.max(t)+1):
 				tb = (t == clss)
 				pb = (p == clss)
-				cb = confusion_matrix(tb,pb)
+				cb = confusion_matrix(tb,pb,labels=[0, 1])
 				print(accuracy_score(tb,pb),
 					precision_score(tb,pb),
 					recall_score(tb,pb),
