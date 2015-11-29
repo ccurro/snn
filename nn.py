@@ -179,7 +179,6 @@ else: # testing
 		targets.append(target)
 
 	targets = np.array(targets,np.int,ndmin=2)
-	softPredictions = np.array(predictions,np.float64,ndmin=2)
 	predictions = np.array(np.round(predictions),np.int,ndmin=2)
 
 	# Make sure shapes of targets and preds are nClasses by nExamples
@@ -189,6 +188,5 @@ else: # testing
 	if np.shape(targets)[0] == dataFeeder.listMax:
 		targets = np.transpose(targets)
 		predictions = np.transpose(predictions)
-		softPredictions = np.transpose(softPredictions)
 
-	score(targets,predictions,softPredictions)
+	score(targets,predictions,outFile)
