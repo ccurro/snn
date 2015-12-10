@@ -11,6 +11,6 @@ def initWeights(layerSizes):
 
 	for layer in range(1,len(layerSizes)):
 		for node in range(layerSizes[layer]):
-			print(' '.join(map(str,np.round(np.random.rand(layerSizes[layer-1]+1),3))))
+			print(' '.join(map(str,np.round(np.random.rand(layerSizes[layer-1]+1)/10,3))))
 
-initWeights([10, 20, 10])
+initWeights([11, 20, 1])
