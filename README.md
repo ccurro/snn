@@ -49,6 +49,6 @@ a their final grade for the term.
 Rayleigh and Rician based auto-regressive first-order stochastic processes.
 Each example is labeled according to the underlying distribution of the
 process. Extra training examples can be generated with
-[extraSetGen2.py][./extraSetGen2.py]. The init file for this set was
-generating with [genInitWeights.py][./genInitWeights.py]. The weights were
+[extraSetGen2.py](./extraSetGen2.py). The init file for this set was
+generating with [genInitWeights.py](./genInitWeights.py). The weights were
 drawn from a uniform distribution over the range [0,0.1].
